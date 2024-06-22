@@ -1,7 +1,7 @@
-from src.app.func import print_hi
+from src.app import hello_world
 
 
 def test_print_hi():
-    output = print_hi()
-    check = 'Hi'
+    output = hello_world()
+    check = 'Hello, cambada!'
     assert output == check 

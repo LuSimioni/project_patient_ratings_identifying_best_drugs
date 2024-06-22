@@ -1,11 +1,5 @@
-import streamlit as st
+from src.func import hello_world
 
-
-def hello_world():
-    return "Hello, cabada!"
-
-def main():
-    st.write(hello_world())
 
 if __name__ == "__main__":
-    main()
+    hello_world()
