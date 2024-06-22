@@ -1,4 +1,4 @@
-from src.app.function import print_hi
+from src.app.func import print_hi
 
 
 def test_print_hi():
