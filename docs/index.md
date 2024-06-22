@@ -2,8 +2,6 @@
 
 ## Objetivo
 
-## Arquitetura de solução
-
 
 ### Teste unitário
 Permite testar o código na sua máquina antes de subir para um repositório GIT
