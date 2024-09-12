@@ -23,8 +23,9 @@ sqlalchemy = "^2.0.27"
 python-dotenv = "^1.0.1"
 psycopg2 = "^2.9.9"
 psycopg2-binary = "^2.9.9"
-streamlit = "^1.35.0"
 pre-commit = "^3.7.1"
+pip-audit = "^2.7.3"
+briefer = "^0.0.12"
 
 [build-system]
 requires = ["poetry-core"]
