@@ -52,7 +52,7 @@ class TestFunctions(unittest.TestCase):
         data = {'col1': ['1', '2'], 'col2': ['3.0', '4.0']}
         df = pd.DataFrame(data)
         df = set_column_types(df, 'dummy_path.json')
-        self.assertEqual(df['col1'].dtype, 'int')
+        self.assertEqual(df['col1'].dtype, 'int32')
         self.assertEqual(df['col2'].dtype, 'float64')
 
     def test_camel_to_snake(self):
