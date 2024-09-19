@@ -49,15 +49,7 @@ def load_settings():
 
 @pa.check_output(ProdutoSchema, lazy=True)
 def exportar_df_para_sql() -> pd.DataFrame:
-    """
-    Extrai dados do banco de dados SQL usando a consulta fornecida.
 
-    Args:
-        query: A consulta SQL para extrair dados.
-
-    Returns:
-        Um DataFrame do Pandas contendo os dados extraídos.
-    """
     settings = load_settings()
 
 
