@@ -6,8 +6,7 @@ import pandas as pd
 import pandera as pa
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
-
-from schema_crm import DataFrameSchema
+from schema import ProdutoSchema
 
 def load_csv_to_dataframe(file_path: str) -> pd.DataFrame:
     """
@@ -48,8 +47,8 @@ def load_settings():
     }
     return settings
 
-#@pa.check_output(DataFrameSchema, lazy=True)
-def exportar_df_para_sql(df: pd.DataFrame) -> pd.DataFrame:
+@pa.check_output(ProdutoSchema, lazy=True)
+def exportar_df_para_sql() -> pd.DataFrame:
     """
     Extrai dados do banco de dados SQL usando a consulta fornecida.
 
@@ -61,16 +60,17 @@ def exportar_df_para_sql(df: pd.DataFrame) -> pd.DataFrame:
     """
     settings = load_settings()
 
+
     # Criar a string de conexão com base nas configurações
     connection_string = f"postgresql://{settings['db_user']}:{settings['db_pass']}@{settings['db_host']}:{settings['db_port']}/{settings['db_name']}"
 
     # Criar engine de conexão
     engine = create_engine(connection_string)
-
-    with engine.connect() as conn, conn.begin():
-            df = df.to_sql('reviews_all', con=engine, if_exists='replace', index=False)
     
-    return df
+    with engine.connect() as conn, conn.begin():
+        df = ingestion_and_transform()
+        df.to_sql('reviews_all', con=engine, if_exists='append', index=False)        
+    return df    
 
 def set_column_types(df: pd.DataFrame, json_file_path: str) -> pd.DataFrame:
     """
@@ -138,6 +138,14 @@ def rename_columns(df: pd.DataFrame) -> pd.DataFrame:
     df.drop(columns=['unnamed: 0'], inplace= True)
     create_index_column(df)
 
-    for column, dtype in df.dtypes.items():
-        print(f"Coluna: {column}, Tipo de dado: {dtype}")
     return df
+
+def ingestion_and_transform() -> pd.DataFrame:
+
+    df_load_csv = load_csv_to_dataframe('assets/drugLibTrain_raw.csv')
+    df_set_types = set_column_types(df_load_csv, 'config/column_types.json')
+    df = rename_columns(df_set_types)
+
+    return df
+
+
