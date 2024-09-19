@@ -1,14 +1,15 @@
-import pandas as pd
 import json
-import re
-import psycopg2
 import os
-from sqlalchemy import create_engine
+import re
 from pathlib import Path
+import pandas as pd
 import pandera as pa
 from dotenv import load_dotenv
+from sqlalchemy import create_engine
 
-def load_csv_to_dataframe(file_path):
+from schema_crm import DataFrameSchema
+
+def load_csv_to_dataframe(file_path: str) -> pd.DataFrame:
     """
     Loads a CSV file into a pandas DataFrame.
 
@@ -21,6 +22,7 @@ def load_csv_to_dataframe(file_path):
     try:
         # Load the CSV file into a DataFrame
         df = pd.read_csv(file_path, encoding ='utf-8')
+        print(df)
         return df
     
     except FileNotFoundError:
@@ -31,13 +33,6 @@ def load_csv_to_dataframe(file_path):
         print("Error: The file is improperly formatted.")
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
-
-def decode_dataframe(df):
-
-    for col in df.select_dtypes(include=[object]):
-        df[col] = df[col].apply(lambda x: x.encode('utf-8', errors='ignore').decode('utf-8') if isinstance(x, str) else x)
-
-    return df
 
 def load_settings():
     """Carrega as configurações a partir de variáveis de ambiente."""
@@ -53,7 +48,8 @@ def load_settings():
     }
     return settings
 
-def extrair_do_sql(query: str) -> pd.DataFrame:
+#@pa.check_output(DataFrameSchema, lazy=True)
+def exportar_df_para_sql(df: pd.DataFrame) -> pd.DataFrame:
     """
     Extrai dados do banco de dados SQL usando a consulta fornecida.
 
@@ -72,14 +68,14 @@ def extrair_do_sql(query: str) -> pd.DataFrame:
     engine = create_engine(connection_string)
 
     with engine.connect() as conn, conn.begin():
-            df_crm = pd.read_sql(query, conn)
+            df = df.to_sql('reviews_all', con=engine, if_exists='replace', index=False)
+    
+    return df
 
-    return df_crm
-
-def set_column_types(df, json_file_path):
+def set_column_types(df: pd.DataFrame, json_file_path: str) -> pd.DataFrame:
     """
     Reads a JSON file specifying column types and applies them to the DataFrame.
-
+    
     Parameters:
     df (pd.DataFrame): The DataFrame to which column types will be applied.
     json_file_path (str): The path to the JSON file containing column types.
@@ -92,32 +88,22 @@ def set_column_types(df, json_file_path):
         with open(json_file_path, 'r') as file:
             column_types = json.load(file)
         
-        # Convert the JSON column types to pandas types and apply to DataFrame
-        for column, col_type in column_types.items():
-            if col_type == 'int':
-                df[column] = df[column].astype(int)
-            elif col_type == 'float':
-                df[column] = df[column].astype(float)
-            elif col_type in ['text', 'string']:
-                df[column] = df[column].astype(str)
-            elif col_type == 'bool':
-                df[column] = df[column].astype(bool)
-            else:
-                print(f"Warning: Unknown type '{col_type}' for column '{column}'")
-        
-        return df
-    
+        # Iterate through the columns and apply types only if the column exists in the DataFrame
+
+        for column in df:
+            defined_type = column_types[column]
+            if defined_type == 'string':
+                df[column] = df[column].astype("string")
+            elif defined_type == 'int':
+                df[column] = df[column].astype("int")
+        return df    
     except FileNotFoundError:
-        print(f"Error: The file at {json_file_path} was not found.")
+        print(f"Error: File '{json_file_path}' not found.")
     except json.JSONDecodeError:
-        print("Error: The JSON file is improperly formatted.")
-    except KeyError as e:
-        print(f"Error: Column {e} not found in DataFrame.")
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        print(f"Error: Could not decode JSON from file '{json_file_path}'.")        
 
 
-def camel_to_snake(column_name):
+def camel_to_snake(column_name: str) -> str:
     """
     Converts a camelCase or PascalCase string to snake_case.
     
@@ -133,12 +119,12 @@ def camel_to_snake(column_name):
     return snake_case.lower()
 
 
-def create_index_column(df):
+def create_index_column(df:pd.DataFrame) -> pd.DataFrame:
 
     df.insert(0, 'id', df.index + 1)
     return df
 
-def rename_columns(df):
+def rename_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
     Renames all columns of a DataFrame from camelCase/PascalCase to snake_case.
     
@@ -152,4 +138,6 @@ def rename_columns(df):
     df.drop(columns=['unnamed: 0'], inplace= True)
     create_index_column(df)
 
+    for column, dtype in df.dtypes.items():
+        print(f"Coluna: {column}, Tipo de dado: {dtype}")
     return df
