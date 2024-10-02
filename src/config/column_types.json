@@ -1,0 +1,11 @@
+{
+    "Unnamed: 0": "int",
+    "urlDrugName": "string",
+    "rating": "int",
+    "effectiveness": "string",
+    "sideEffects": "string",
+    "condition": "string",
+    "benefitsReview": "string",
+    "sideEffectsReview": "string",
+    "commentsReview": "string"
+}

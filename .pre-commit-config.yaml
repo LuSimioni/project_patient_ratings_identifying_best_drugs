@@ -1,8 +1,28 @@
--   id: bandit
-    name: bandit
-    description: 'Bandit is a tool for finding common security issues in Python code'
-    entry: bandit
-    language: python
-    language_version: python3
-    types: [python]
-    require_serial: true
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+
+  - repo: https://github.com/psf/black
+    rev: 23.9.1
+    hooks:
+      - id: black
+
+  - repo: https://github.com/pre-commit/mirrors-isort
+    rev: v5.10.1
+    hooks:
+      - id: isort
+
+  - repo: local
+    hooks:
+      - id: pip-audit
+        name: pip-audit
+        entry: pip-audit
+        args: []
+        language: system
+        pass_filenames: false
+        types: [python] # Opcional: se você quiser que isso seja executado apenas quando arquivos Python forem alterados.
