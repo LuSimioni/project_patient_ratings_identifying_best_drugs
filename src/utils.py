@@ -47,8 +47,25 @@ def load_settings():
     }
     return settings
 
+def export_df_raw_to_sql() -> pd.DataFrame:
+
+    settings = load_settings()
+
+
+    # Criar a string de conexão com base nas configurações
+    connection_string = f"postgresql://{settings['db_user']}:{settings['db_pass']}@{settings['db_host']}:{settings['db_port']}/{settings['db_name']}"
+
+    # Criar engine de conexão
+    engine = create_engine(connection_string)
+    
+    with engine.connect() as conn, conn.begin():
+        df = ingestion_raw_to_db()
+        df.to_sql('tb_raw_reviews_all', con=engine, if_exists='replace', index=False)        
+    return df
+
+
 @pa.check_output(ProdutoSchema, lazy=True)
-def exportar_df_para_sql() -> pd.DataFrame:
+def export_df_work_to_sql() -> pd.DataFrame:
 
     settings = load_settings()
 
@@ -61,8 +78,10 @@ def exportar_df_para_sql() -> pd.DataFrame:
     
     with engine.connect() as conn, conn.begin():
         df = ingestion_and_transform()
-        df.to_sql('reviews_all', con=engine, if_exists='append', index=False)        
+        df.to_sql('tb_work_reviews_all', con=engine, if_exists='replace', index=False)        
     return df    
+
+
 
 def set_column_types(df: pd.DataFrame, json_file_path: str) -> pd.DataFrame:
     """
@@ -140,4 +159,8 @@ def ingestion_and_transform() -> pd.DataFrame:
 
     return df
 
+def ingestion_raw_to_db()-> pd.DataFrame:
 
+    df = load_csv_to_dataframe('assets/drugLibTrain_raw.csv')
+
+    return df

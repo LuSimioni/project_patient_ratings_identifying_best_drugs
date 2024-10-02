@@ -1,8 +1,9 @@
-from utils import exportar_df_para_sql
+from utils import export_df_work_to_sql, export_df_raw_to_sql
 
 if __name__ == "__main__":
     
-    df = exportar_df_para_sql()
+    export_df_raw_to_sql()
+    export_df_work_to_sql()
 '''
 schema_crm = pa.infer_schema(df)
 
