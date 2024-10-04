@@ -1,6 +1,17 @@
 version: '3'
 
 services:
+  project-ratings:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on: 
+      - teste-postgres-compose
+    networks:
+      - postgres-compose-network
+    environment:
+      - DATABASE_URL=postgresql://postgres:1234@teste-postgres-compose:15432/db_patient_ratings
+    restart: always
   teste-postgres-compose:
     image: postgres
     environment:
@@ -9,6 +20,9 @@ services:
       - "15432:5432"
     networks:
       - postgres-compose-network
+    volumes:
+      - ./data:/docker-entrypoint-initdb.d
+      - ./pgdata:/var/lib/postgresql/data
       
   teste-pgadmin-compose:
     image: dpage/pgadmin4
@@ -22,6 +36,6 @@ services:
     networks:
       - postgres-compose-network
 
-networks: 
+networks:
   postgres-compose-network:
     driver: bridge

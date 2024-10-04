@@ -53,14 +53,14 @@ def export_df_raw_to_sql() -> pd.DataFrame:
 
 
     # Criar a string de conexão com base nas configurações
-    connection_string = f"postgresql://{settings['db_user']}:{settings['db_pass']}@{settings['db_host']}:{settings['db_port']}/{settings['db_name']}"
-
+    #connection_string = f"postgresql://{settings['db_user']}:{settings['db_pass']}@{settings['db_host']}:{settings['db_port']}/{settings['db_name']}"
+    connection_string = os.getenv("DATABASE_URL")
     # Criar engine de conexão
     engine = create_engine(connection_string)
     
     with engine.connect() as conn, conn.begin():
         df = ingestion_raw_to_db()
-        df.to_sql('tb_raw_reviews_all', con=engine, if_exists='replace', index=False)        
+        df.to_sql('tb_raw_reviews_all', con=conn, if_exists='replace', index=False)        
     return df
 
 
@@ -78,7 +78,7 @@ def export_df_work_to_sql() -> pd.DataFrame:
     
     with engine.connect() as conn, conn.begin():
         df = ingestion_and_transform()
-        df.to_sql('tb_work_reviews_all', con=engine, if_exists='replace', index=False)        
+        df.to_sql('tb_work_reviews_all', con=conn, if_exists='replace', index=False)        
     return df    
 
 

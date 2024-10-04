@@ -1,4 +1,5 @@
 from utils import export_df_work_to_sql, export_df_raw_to_sql
+import pandas as pd
 
 if __name__ == "__main__":
     
