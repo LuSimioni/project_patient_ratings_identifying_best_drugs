@@ -23,9 +23,9 @@ def load_csv_to_dataframe(file_path: str) -> pd.DataFrame:
         df = pd.read_csv(file_path, encoding ='utf-8')
         print(df)
         return df
-    
-    except FileNotFoundError:
-        print(f"Error: The file at {file_path} was not found.")
+
+    except FileNotFoundError as e:
+        print(f"Error: The file at {file_path} was not found.", e)
     except pd.errors.EmptyDataError:
         print("Error: The file is empty.")
     except pd.errors.ParserError:
@@ -51,16 +51,16 @@ def export_df_raw_to_sql() -> pd.DataFrame:
 
     settings = load_settings()
 
-
     # Criar a string de conexão com base nas configurações
-    #connection_string = f"postgresql://{settings['db_user']}:{settings['db_pass']}@{settings['db_host']}:{settings['db_port']}/{settings['db_name']}"
-    connection_string = os.getenv("DATABASE_URL")
+    connection_string = f"postgresql://{settings['db_user']}:{settings['db_pass']}@{settings['db_host']}:{settings['db_port']}/{settings['db_name']}")
+
     # Criar engine de conexão
     engine = create_engine(connection_string)
-    
+
     with engine.connect() as conn, conn.begin():
+        print("Loading ingestion_raw_to_db...")
         df = ingestion_raw_to_db()
-        df.to_sql('tb_raw_reviews_all', con=conn, if_exists='replace', index=False)        
+        df.to_sql('tb_raw_reviews_all', con=conn, if_exists='replace', index=False)
     return df
 
 
@@ -69,24 +69,24 @@ def export_df_work_to_sql() -> pd.DataFrame:
 
     settings = load_settings()
 
-
     # Criar a string de conexão com base nas configurações
     connection_string = f"postgresql://{settings['db_user']}:{settings['db_pass']}@{settings['db_host']}:{settings['db_port']}/{settings['db_name']}"
 
     # Criar engine de conexão
     engine = create_engine(connection_string)
-    
+
     with engine.connect() as conn, conn.begin():
+        print("Loading ingestion_and_transform...")
         df = ingestion_and_transform()
-        df.to_sql('tb_work_reviews_all', con=conn, if_exists='replace', index=False)        
-    return df    
+        df.to_sql('tb_work_reviews_all', con=conn, if_exists='replace', index=False)
+    return df
 
 
 
 def set_column_types(df: pd.DataFrame, json_file_path: str) -> pd.DataFrame:
     """
     Reads a JSON file specifying column types and applies them to the DataFrame.
-    
+
     Parameters:
     df (pd.DataFrame): The DataFrame to which column types will be applied.
     json_file_path (str): The path to the JSON file containing column types.
@@ -98,7 +98,7 @@ def set_column_types(df: pd.DataFrame, json_file_path: str) -> pd.DataFrame:
         # Load the JSON file
         with open(json_file_path, 'r') as file:
             column_types = json.load(file)
-        
+
         # Iterate through the columns and apply types only if the column exists in the DataFrame
 
         for column in df:
@@ -107,20 +107,20 @@ def set_column_types(df: pd.DataFrame, json_file_path: str) -> pd.DataFrame:
                 df[column] = df[column].astype("string")
             elif defined_type == 'int':
                 df[column] = df[column].astype("int")
-        return df    
+        return df
     except FileNotFoundError:
         print(f"Error: File '{json_file_path}' not found.")
     except json.JSONDecodeError:
-        print(f"Error: Could not decode JSON from file '{json_file_path}'.")        
+        print(f"Error: Could not decode JSON from file '{json_file_path}'.")
 
 
 def camel_to_snake(column_name: str) -> str:
     """
     Converts a camelCase or PascalCase string to snake_case.
-    
+
     Parameters:
     column_name (str): The original column name in camelCase or PascalCase.
-    
+
     Returns:
     str: The column name converted to snake_case.
     """
@@ -138,10 +138,10 @@ def create_index_column(df:pd.DataFrame) -> pd.DataFrame:
 def rename_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
     Renames all columns of a DataFrame from camelCase/PascalCase to snake_case.
-    
+
     Parameters:
     df (pd.DataFrame): The DataFrame with columns to rename.
-    
+
     Returns:
     pd.DataFrame: The DataFrame with renamed columns.
     """
@@ -153,14 +153,23 @@ def rename_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 def ingestion_and_transform() -> pd.DataFrame:
 
-    df_load_csv = load_csv_to_dataframe('assets/drugLibTrain_raw.csv')
-    df_set_types = set_column_types(df_load_csv, 'config/column_types.json')
+    # Safely load the CSV file using python os library
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(current_directory, 'assets', 'drugLibTrain_raw.csv')
+    df_load_csv = load_csv_to_dataframe(file_path)
+
+    # Set the column types using the JSON file
+    column_types_path = os.path.join(current_directory, 'config', 'column_types.json')
+    df_set_types = set_column_types(df_load_csv, column_types_path)
     df = rename_columns(df_set_types)
 
     return df
 
-def ingestion_raw_to_db()-> pd.DataFrame:
+def ingestion_raw_to_db() -> pd.DataFrame:
 
-    df = load_csv_to_dataframe('assets/drugLibTrain_raw.csv')
+    # Safely load the CSV file using python os library
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(current_directory, 'assets', 'drugLibTrain_raw.csv')
+    df = load_csv_to_dataframe(file_path)
 
     return df

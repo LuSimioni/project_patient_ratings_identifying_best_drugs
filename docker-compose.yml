@@ -1,29 +1,39 @@
-version: '3'
+version: '3.8'
 
 services:
   project-ratings:
     build:
       context: .
       dockerfile: Dockerfile
-    depends_on: 
-      - teste-postgres-compose
+    depends_on:
+      teste-postgres-compose:
+        condition: service_healthy
     networks:
       - postgres-compose-network
     environment:
-      - DATABASE_URL=postgresql://postgres:1234@teste-postgres-compose:15432/db_patient_ratings
+      - POSTGRES_HOST=teste-postgres-compose
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_DB=db_patient_ratings
+      - POSTGRES_PORT=5432
     restart: always
   teste-postgres-compose:
     image: postgres
     environment:
       POSTGRES_PASSWORD: "1234"
+      POSTGRES_DB: "db_patient_ratings"
     ports:
       - "15432:5432"
     networks:
       - postgres-compose-network
     volumes:
       - ./data:/docker-entrypoint-initdb.d
-      - ./pgdata:/var/lib/postgresql/data
-      
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   teste-pgadmin-compose:
     image: dpage/pgadmin4
     environment:
