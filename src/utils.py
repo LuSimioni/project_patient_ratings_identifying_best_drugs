@@ -52,8 +52,8 @@ def export_df_raw_to_sql() -> pd.DataFrame:
     settings = load_settings()
 
     # Criar a string de conexão com base nas configurações
-    #connection_string = f"postgresql://{settings['db_user']}:{settings['db_pass']}@{settings['db_host']}:{settings['db_port']}/{settings['db_name']}"
-    connection_string = os.getenv("DATABASE_URL")
+    connection_string = f"postgresql://{settings['db_user']}:{settings['db_pass']}@{settings['db_host']}:{settings['db_port']}/{settings['db_name']}")
+
     # Criar engine de conexão
     engine = create_engine(connection_string)
 
@@ -70,8 +70,7 @@ def export_df_work_to_sql() -> pd.DataFrame:
     settings = load_settings()
 
     # Criar a string de conexão com base nas configurações
-    # connection_string = f"postgresql://{settings['db_user']}:{settings['db_pass']}@{settings['db_host']}:{settings['db_port']}/{settings['db_name']}"
-    connection_string = os.getenv("DATABASE_URL")
+    connection_string = f"postgresql://{settings['db_user']}:{settings['db_pass']}@{settings['db_host']}:{settings['db_port']}/{settings['db_name']}"
 
     # Criar engine de conexão
     engine = create_engine(connection_string)

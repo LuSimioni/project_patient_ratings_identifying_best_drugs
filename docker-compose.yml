@@ -11,7 +11,11 @@ services:
     networks:
       - postgres-compose-network
     environment:
-      - DATABASE_URL=postgresql://postgres:1234@teste-postgres-compose:5432/db_patient_ratings
+      - POSTGRES_HOST=teste-postgres-compose
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_DB=db_patient_ratings
+      - POSTGRES_PORT=5432
     restart: always
   teste-postgres-compose:
     image: postgres
