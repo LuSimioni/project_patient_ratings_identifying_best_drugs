@@ -2,11 +2,14 @@ import json
 import os
 import re
 from pathlib import Path
+
 import pandas as pd
 import pandera as pa
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
+
 from schema import ProdutoSchema
+
 
 def load_csv_to_dataframe(file_path: str) -> pd.DataFrame:
     """
@@ -24,8 +27,8 @@ def load_csv_to_dataframe(file_path: str) -> pd.DataFrame:
         print(df)
         return df
     
-    except FileNotFoundError:
-        print(f"Error: The file at {file_path} was not found.")
+    except FileNotFoundError as e:
+        print(f"Error: The file at {file_path} was not found.", e)
     except pd.errors.EmptyDataError:
         print("Error: The file is empty.")
     except pd.errors.ParserError:
@@ -53,8 +56,8 @@ def export_df_raw_to_sql() -> pd.DataFrame:
 
 
     # Criar a string de conexão com base nas configurações
-    #connection_string = f"postgresql://{settings['db_user']}:{settings['db_pass']}@{settings['db_host']}:{settings['db_port']}/{settings['db_name']}"
-    connection_string = os.getenv("DATABASE_URL")
+    connection_string = f"postgresql://{settings['db_user']}:{settings['db_pass']}@{settings['db_host']}:{settings['db_port']}/{settings['db_name']}"
+    #connection_string = os.getenv("DATABASE_URL")
     # Criar engine de conexão
     engine = create_engine(connection_string)
     
@@ -70,17 +73,17 @@ def export_df_work_to_sql() -> pd.DataFrame:
     settings = load_settings()
 
 
-    # Criar a string de conexão com base nas configurações
     connection_string = f"postgresql://{settings['db_user']}:{settings['db_pass']}@{settings['db_host']}:{settings['db_port']}/{settings['db_name']}"
+    #connection_string = os.getenv("DATABASE_URL")
 
     # Criar engine de conexão
     engine = create_engine(connection_string)
     
     with engine.connect() as conn, conn.begin():
+        print("Loading ingestion_and_transform ...")
         df = ingestion_and_transform()
         df.to_sql('tb_work_reviews_all', con=conn, if_exists='replace', index=False)        
     return df    
-
 
 
 def set_column_types(df: pd.DataFrame, json_file_path: str) -> pd.DataFrame:
@@ -153,14 +156,24 @@ def rename_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 def ingestion_and_transform() -> pd.DataFrame:
 
-    df_load_csv = load_csv_to_dataframe('assets/drugLibTrain_raw.csv')
-    df_set_types = set_column_types(df_load_csv, 'config/column_types.json')
+
+    # Safely load the CSV file using python os library
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(current_directory, 'assets', 'drugLibTrain_raw.csv')
+    df_load_csv = load_csv_to_dataframe(file_path)
+
+    # Set the column types using the JSON file
+    column_types_path = os.path.join(current_directory, 'config', 'column_types.json')
+    df_set_types = set_column_types(df_load_csv, column_types_path)
     df = rename_columns(df_set_types)
 
     return df
 
 def ingestion_raw_to_db()-> pd.DataFrame:
 
-    df = load_csv_to_dataframe('assets/drugLibTrain_raw.csv')
+    # Safely load the CSV file using python os library
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(current_directory, 'assets', 'drugLibTrain_raw.csv')
+    df = load_csv_to_dataframe(file_path)
 
     return df
